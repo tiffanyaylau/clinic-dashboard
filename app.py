@@ -11,7 +11,7 @@ DATA_PATH = "Doctor list_with_Dashboard.xlsx"
 
 # 侧边栏上传：可以上传单一或多保险公司 Excel
 uploaded_file = st.sidebar.file_uploader(
-    "Upload insurer data (single or multi-sheet Excel)",
+    "Upload data (single or multi-sheet Excel)",
     type=["xlsx"]
 )
 
@@ -216,18 +216,7 @@ if "discount_band" in filtered.columns and filtered["discount_band"].notna().any
     st.dataframe(chart_with_total)
 else:
     st.info("當前保險公司數據中未檢測到折扣檔位（discount band）列。")
-    
-    # 用表格显示带 Total 的数据
-    st.dataframe(chart_with_total)
 
-    # 在表格下方增加下载按钮（导出当前表格数据）
-    csv_data = chart_with_total.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        label="Download discount band data (CSV)",
-        data=csv_data,
-        file_name=f"discount_band_{selected_insurer}.csv",
-        mime="text/csv",
-    )
 
 
 
