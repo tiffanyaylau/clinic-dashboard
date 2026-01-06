@@ -181,11 +181,11 @@ with col2:
         top_band_df = filtered[filtered["discount_band"] == top_band]
         top_band_avg = top_band_df["dicount"].mean()
         st.metric(
-            f"Average discount ({top_band})",
+            f"Max discount ({top_band})",
             f"{top_band_avg * 100:.2f}%"
         )
     else:
-        st.metric("Average discount (top band)", "N/A")
+        st.metric("Max discount (top band)", "N/A")
 
 # ===================== Chart: discount band distribution =====================
 st.subheader("Discount band distribution (number of clinics)")
@@ -216,6 +216,7 @@ if "discount_band" in filtered.columns and filtered["discount_band"].notna().any
     st.dataframe(chart_with_total)
 else:
     st.info("當前保險公司數據中未檢測到折扣檔位（discount band）列。")
+
 
 
 
