@@ -15,6 +15,13 @@ uploaded_file = st.sidebar.file_uploader(
     type=["xlsx"]
 )
 
+
+# 导入模板说明（作为侧边栏的小字说明）
+st.sidebar.caption(
+    "Input columns should includes: 'Chi_location', 'Service_type', 'Discount', 'Discount_band'. "
+)
+
+
 # ===================== Data loading =====================
 @st.cache_data
 def load_data(file) -> pd.DataFrame:
@@ -209,5 +216,18 @@ if "discount_band" in filtered.columns and filtered["discount_band"].notna().any
     st.dataframe(chart_with_total)
 else:
     st.info("當前保險公司數據中未檢測到折扣檔位（discount band）列。")
+    
+    # 用表格显示带 Total 的数据
+    st.dataframe(chart_with_total)
+
+    # 在表格下方增加下载按钮（导出当前表格数据）
+    csv_data = chart_with_total.to_csv(index=False).encode("utf-8-sig")
+    st.download_button(
+        label="Download discount band data (CSV)",
+        data=csv_data,
+        file_name=f"discount_band_{selected_insurer}.csv",
+        mime="text/csv",
+    )
+
 
 
