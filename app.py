@@ -166,7 +166,7 @@ with col1:
     avg_discount = filtered["dicount"].mean()
     st.metric("Average discount", f"{avg_discount * 100:.2f}%")
 
-# KPI2：最高 discount band 的平均折扣（给老板看结构）
+# KPI2：最高 discount band 的平均折扣
 with col2:
     if "discount_band" in filtered.columns and filtered["discount_band"].notna().any():
         # 找出最高的一个 band（例如 '90%-99%'）
@@ -205,8 +205,9 @@ if "discount_band" in filtered.columns and filtered["discount_band"].notna().any
     )
     chart_with_total = pd.concat([chart_data, total_row], ignore_index=True)
 
-    # 用表格显示带 Total 的数据
+    # 表格下方显示 Total 的数据
     st.dataframe(chart_with_total)
 else:
-    st.info("当前保险公司数据中未检测到折扣档位（discount band）列。")
+    st.info("當前保險公司數據中未檢測到折扣檔位（discount band）列。")
+
 
