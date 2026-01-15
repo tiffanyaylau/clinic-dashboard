@@ -9,14 +9,14 @@ st.set_page_config(
 
 DATA_PATH = "Doctor list_with_Dashboard.xlsx"
 
-# 侧边栏上传：可以上传单一或多保险公司 Excel
+# 上傳單一或多工作簿的excel
 uploaded_file = st.sidebar.file_uploader(
     "Upload data (single or multi-sheet Excel)",
     type=["xlsx"]
 )
 
 
-# 导入模板说明（作为侧边栏的小字说明）
+# 文件中含有這些字段即可識別
 st.sidebar.caption(
     "Input columns should includes: 'Chi_location', 'Service_type', 'Discount', 'Discount_band'. "
 )
@@ -27,10 +27,10 @@ st.sidebar.caption(
 def load_data(file) -> pd.DataFrame:
     """
     file 可以是：
-    - 本地路径字符串（默认 Doctor list_with_Dashboard.xlsx）
-    - 上传的文件对象（单保险公司或多保险公司）
-    总是按 sheet_name=None 读取：每个 sheet 名视为 insurer。
-    自动兼容 dicount/discount、discount band 等列名差异。
+    - 本地路徑（默认 Doctor list_with_Dashboard.xlsx）
+    - 上傳文件
+    總是按 sheet_name=None 讀取：每個 sheet 視爲 insurer。
+    自動兼容 dicount/discount、discount band 等列名差異。
     """
     sheets_dict = pd.read_excel(file, sheet_name=None)
 
@@ -40,7 +40,7 @@ def load_data(file) -> pd.DataFrame:
         if df is None or df.empty:
             continue
 
-        # 统一列名
+        # 統一列名
         df.columns = [c.strip().lower() for c in df.columns]
         lower_cols = df.columns
 
@@ -62,7 +62,7 @@ def load_data(file) -> pd.DataFrame:
         if svc_col:
             col_map[svc_col] = "service_type"
 
-        # 折扣系数 dicount / discount
+        #  dicount / discount
         disc_col = None
         for name in ["dicount", "discount"]:
             if name in lower_cols:
@@ -73,24 +73,24 @@ def load_data(file) -> pd.DataFrame:
         if disc_col:
             col_map[disc_col] = "dicount"
 
-        # 折扣档位 discount band / discountband
+        #  discount band / discountband
         band_col = find_first_contains("discount", "band")
         if band_col:
             col_map[band_col] = "discount_band"
 
-        # 应用重命名
+        # 應用重命名
         df = df.rename(columns=col_map)
 
-        # 如果没有折扣列，跳过该 sheet
+        # 如果沒有折扣，跳過該 sheet
         if "dicount" not in df.columns:
             continue
 
-        # 为缺失列补空
+        # 缺失列填補
         for c in ["chi_location", "service_type", "discount_band"]:
             if c not in df.columns:
                 df[c] = None
 
-        # 只保留核心列
+        # 只保留核心字段
         keep_cols = ["chi_location", "service_type", "dicount", "discount_band"]
         df = df[keep_cols].copy()
 
@@ -98,7 +98,7 @@ def load_data(file) -> pd.DataFrame:
         df["dicount"] = pd.to_numeric(df["dicount"], errors="coerce")
         df = df[df["dicount"].notna()]
 
-        # insurer = sheet 名（单 sheet 文件也是用 sheet 名当公司名）
+        # insurer = sheet 
         df["insurer"] = sheet_name
 
         all_dfs.append(df)
@@ -109,24 +109,24 @@ def load_data(file) -> pd.DataFrame:
     return pd.concat(all_dfs, ignore_index=True)
 
 
-# 先看有没有上传文件，有的话优先用上传的；否则用本地默认总表
+# 有新文件上傳，否則默認舊本地文件
 try:
     if uploaded_file is not None:
         df = load_data(uploaded_file)
     else:
         df = load_data(DATA_PATH)
 except Exception as e:
-    st.error(f"加载 Excel 数据出错：{e}")
+    st.error(f"加載 Excel 數據出錯：{e}")
     st.stop()
 
 if df.empty:
-    st.error("Excel 中未识别到有效的折扣数据，请检查各工作表的列名。")
+    st.error("Excel 中未識別有效字段，請檢查工作表的列名。")
     st.stop()
 
 # ===================== Sidebar filters =====================
 st.sidebar.header("Filters")
 
-# 保险公司列表
+# 保險公司list
 insurer_options = sorted(df["insurer"].dropna().unique())
 selected_insurer = st.sidebar.selectbox(
     "Insurance company (sheet)",
@@ -135,7 +135,7 @@ selected_insurer = st.sidebar.selectbox(
 
 df_ins = df[df["insurer"] == selected_insurer].copy()
 
-# Chi Location 多选
+# Chi Location 多選
 chi_loc_options = sorted(df_ins["chi_location"].dropna().unique())
 selected_chi_locs = st.sidebar.multiselect(
     "Chi Location",
@@ -143,7 +143,7 @@ selected_chi_locs = st.sidebar.multiselect(
     default=chi_loc_options,
 )
 
-# Service type 多选
+# Service type 多選
 service_options = sorted(df_ins["service_type"].dropna().unique())
 selected_services = st.sidebar.multiselect(
     "Service type",
@@ -151,7 +151,7 @@ selected_services = st.sidebar.multiselect(
     default=service_options,
 )
 
-# 应用筛选
+# 應用篩選
 filtered = df_ins.copy()
 if selected_chi_locs:
     filtered = filtered[filtered["chi_location"].isin(selected_chi_locs)]
@@ -168,15 +168,15 @@ st.caption(f"Current insurer (sheet): **{selected_insurer}**")
 
 col1, col2 = st.columns(2)
 
-# KPI1：整体平均折扣
+# KPI1：整體平均折扣
 with col1:
     avg_discount = filtered["dicount"].mean()
     st.metric("Average discount", f"{avg_discount * 100:.2f}%")
 
-# KPI2：最高 discount band 的平均折扣
+# KPI2：最高的discount band裏的平均discount
 with col2:
     if "discount_band" in filtered.columns and filtered["discount_band"].notna().any():
-        # 找出最高的一个 band（例如 '90%-99%'）
+        # 先找出最高discount band（例如 '90%-99%'）
         top_band = sorted(filtered["discount_band"].dropna().unique())[-1]
         top_band_df = filtered[filtered["discount_band"] == top_band]
         top_band_avg = top_band_df["dicount"].mean()
@@ -199,23 +199,24 @@ if "discount_band" in filtered.columns and filtered["discount_band"].notna().any
         .reset_index(name="Clinic count")
     )
 
-    # 1）柱状图还是用原始按 band 的数据
+    # 1）柱狀圖
     st.bar_chart(
         data=chart_data.set_index("Discount band"),
         use_container_width=True,
     )
 
-    # 2）在表格下方加总计行
+    # 2）表格總計
     total_count = chart_data["Clinic count"].sum()
     total_row = pd.DataFrame(
         {"Discount band": ["Total"], "Clinic count": [total_count]}
     )
     chart_with_total = pd.concat([chart_data, total_row], ignore_index=True)
 
-    # 表格下方显示 Total 的数据
+    # total數據
     st.dataframe(chart_with_total)
 else:
     st.info("當前保險公司數據中未檢測到折扣檔位（discount band）列。")
+
 
 
 
